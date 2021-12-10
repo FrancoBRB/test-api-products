@@ -1,0 +1,11 @@
+BUILD API WITH: 
+
+[{
+    id:integer UNIQUE
+    name:str
+    description:Text
+    price:integer
+    image:file
+}]
+
+Also can run any crud operation
