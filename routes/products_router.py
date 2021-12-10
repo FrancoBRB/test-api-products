@@ -1,52 +1,45 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response, status
 from schemas.product_schema import Product
 from uuid import uuid4
+from config.database import Conn
+from models.product_model import Products
+from starlette.status import HTTP_204_NO_CONTENT
 
 products = APIRouter()
-
-"""
-Only for testing propuse i'll save json data into array.
-Eventually the array will be replaced by SQL table.
-"""
-products_array = []
 
 
 @products.get('/products')
 def get_products_list():
-    return products_array
+    return Conn.execute(Products.select()).fetchall()
 
 
 @products.get('/products/{id}')
 def get_product(id: str):
-    for prdct in products_array:
-        if prdct["id"] == id:
-            return prdct
-    raise HTTPException(status_code=404, detail="Product not found.")
+    return Conn.execute(Products.select().where(Products.c.id == id)).first()
 
 
 @products.post('/products')
 def create_product(new_product: Product):
-    new_product.id = str(uuid4())
-    n_product = new_product.dict()
-    products_array.append(n_product)
-    return products_array[-1]  # Index -1 reference to last date added
+    n_product = {
+        "name": new_product.name,
+        "description": new_product.description,
+        "price": new_product.price
+    }
+    r = Conn.execute(Products.insert().values(n_product))
+    return Conn.execute(Products.select().where(Products.c.id == r.lastrowid)).first()
 
 
-@products.delete('/products/{id}')
-def update_product(id: str):
-    for index, prdct in enumerate(products_array):
-        if prdct["id"] == id:
-            products_array.pop(index)
-            return {"message": "Product has been sucessfuly deleted."}
-    raise HTTPException(status_code=404, detail="Product not found.")
+@products.delete('/products/{id}', status_code=status.HTTP_204_NO_CONTENT)
+def delete_product(id: str):
+    Conn.execute(Products.delete().where(Products.c.id == id))
+    return Response(status_code=HTTP_204_NO_CONTENT)
 
 
 @products.put('/products/{id}')
-def delete_product(id: str, upd_product: Product):
-    for index, prdct in enumerate(products_array):
-        if prdct["id"] == id:
-            products_array[index]["name"] = upd_product.name
-            products_array[index]["description"] = upd_product.description
-            products_array[index]["price"] = upd_product.price
-            return {"message": "Product has been sucessfuly updated."}
-    raise HTTPException(status_code=404, detail="Product not found.")
+def update_product(id: str, upd_product: Product):
+    Conn.execute(Products.update().values(
+        name=upd_product.name,
+        description=upd_product.description,
+        price=upd_product.price
+    ).where(Products.c.id == id))
+    return Conn.execute(Products.select().where(Products.c.id == id)).first()
