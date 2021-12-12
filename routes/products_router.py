@@ -34,7 +34,7 @@ def create_product(new_product: Product, password:str):
     return Conn.execute(Products.select().where(Products.c.id == r.lastrowid)).first()
 
 
-@products.delete('/products/d/{id}{pass}', status_code=status.HTTP_204_NO_CONTENT)
+@products.delete('/products/d/{id}/{pass}', status_code=status.HTTP_204_NO_CONTENT)
 def delete_product(id: str, password:str):
     if password != PASSWORD_FOR_WRITE:
         raise HTTPException(status_code=401,detail="Unauthorized, wrong password.")
@@ -42,7 +42,7 @@ def delete_product(id: str, password:str):
     return Response(status_code=HTTP_204_NO_CONTENT)
 
 
-@products.put('/products/u/{id}{pass}')
+@products.put('/products/u/{id}/{pass}')
 def update_product(id: str, upd_product: Product, password:str):
     if password != PASSWORD_FOR_WRITE:
         raise HTTPException(status_code=401,detail="Unauthorized, wrong password.")
