@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 .deta/prog_info
 .deta/state
+*.db
