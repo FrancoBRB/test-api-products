@@ -1,7 +1,5 @@
-from fastapi import APIRouter, HTTPException, Response, status, Depends
-from sqlalchemy.sql.sqltypes import String
+from fastapi import APIRouter, HTTPException, Response, status
 from schemas.product_schema import Product
-from uuid import uuid4
 from config.database import Conn
 from models.product_model import Products
 from starlette.status import HTTP_204_NO_CONTENT
@@ -21,34 +19,37 @@ def get_product(id: str):
     return Conn.execute(Products.select().where(Products.c.id == id)).first()
 
 
-@products.post('/products/{password}',)
-def create_product(new_product: Product, password:str):
+@products.post('/products/{password}')
+def create_product(new_product: Product, password: str):
     if password != PASSWORD_FOR_WRITE:
-        raise HTTPException(status_code=401,detail="Unauthorized, wrong password.")
+        raise HTTPException(
+            status_code=401, detail="Unauthorized, wrong password.")
     n_product = {
         "name": new_product.name,
         "description": new_product.description,
         "price": new_product.price
     }
     r = Conn.execute(Products.insert().values(n_product))
-    return Conn.execute(Products.select().where(Products.c.id == r.lastrowid)).first()
+    return new_product
 
 
 @products.delete('/products/d/{id}/{pass}', status_code=status.HTTP_204_NO_CONTENT)
-def delete_product(id: str, password:str):
+def delete_product(id: str, password: str):
     if password != PASSWORD_FOR_WRITE:
-        raise HTTPException(status_code=401,detail="Unauthorized, wrong password.")
+        raise HTTPException(
+            status_code=401, detail="Unauthorized, wrong password.")
     Conn.execute(Products.delete().where(Products.c.id == id))
     return Response(status_code=HTTP_204_NO_CONTENT)
 
 
 @products.put('/products/u/{id}/{pass}')
-def update_product(id: str, upd_product: Product, password:str):
+def update_product(id: str, upd_product: Product, password: str):
     if password != PASSWORD_FOR_WRITE:
-        raise HTTPException(status_code=401,detail="Unauthorized, wrong password.")
+        raise HTTPException(
+            status_code=401, detail="Unauthorized, wrong password.")
     Conn.execute(Products.update().values(
         name=upd_product.name,
         description=upd_product.description,
         price=upd_product.price
     ).where(Products.c.id == id))
-    return Conn.execute(Products.select().where(Products.c.id == id)).first()
+    return upd_product
